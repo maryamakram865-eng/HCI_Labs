@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syringe-Viz Dosage Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
+        
+        body { 
+            background-color: #f8fafc; 
+            font-family: 'Inter', sans-serif; 
+        }
+
+        .liquid {
+            transition: height 0.5s ease-in-out;
+            background: linear-gradient(to bottom, #10b981, #059669);
+        }
+
+        .plunger {
+            transition: bottom 0.5s ease-in-out;
+        }
+
+        /* Prevent layout shifts from input arrows */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex justify-center items-center min-h-screen">
+
+    <div class="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+        
+        <!-- Controls Column -->
+        <div class="bg-white p-6 md:p-10 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col justify-center space-y-10">
+            <div>
+                <h1 class="text-4xl font-black text-slate-900 tracking-tight">Syringe-Viz</h1>
+            </div>
+
+            <div class="space-y-8">
+                <!-- Patient Weight -->
+                <div class="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Patient Weight (kg)</label>
+                    <div class="flex items-center justify-between">
+                        <button onclick="updateVal('weight', -1)" class="w-14 h-14 shrink-0 rounded-2xl bg-white border-2 border-red-100 text-red-500 hover:bg-red-50 transition-all font-bold text-3xl shadow-sm flex items-center justify-center">−</button>
+                        <input type="number" id="weight" value="70" class="w-24 bg-transparent text-center text-4xl font-black text-slate-800 focus:outline-none" oninput="calculate()">
+                        <button onclick="updateVal('weight', 1)" class="w-14 h-14 shrink-0 rounded-2xl bg-white border-2 border-green-100 text-green-500 hover:bg-green-50 transition-all font-bold text-3xl shadow-sm flex items-center justify-center">+</button>
+                    </div>
+                </div>
+
+                <!-- Dosage Rate -->
+                <div class="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Dose Rate (mg / kg)</label>
+                    <div class="flex items-center justify-between">
+                        <button onclick="updateVal('dose', -0.5)" class="w-14 h-14 shrink-0 rounded-2xl bg-white border-2 border-red-100 text-red-500 hover:bg-red-50 transition-all font-bold text-3xl shadow-sm flex items-center justify-center">−</button>
+                        <input type="number" id="dose" value="5" step="0.1" class="w-24 bg-transparent text-center text-4xl font-black text-slate-800 focus:outline-none" oninput="calculate()">
+                        <button onclick="updateVal('dose', 0.5)" class="w-14 h-14 shrink-0 rounded-2xl bg-white border-2 border-green-100 text-green-500 hover:bg-green-50 transition-all font-bold text-3xl shadow-sm flex items-center justify-center">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="showConfirm()" class="w-full bg-emerald-600 text-white py-6 rounded-3xl font-black text-base uppercase tracking-widest hover:bg-emerald-700 transition shadow-xl shadow-emerald-100 active:scale-95 flex items-center justify-center gap-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Confirm Dose
+            </button>
+        </div>
+
+        <!-- Visualization Column -->
+        <div class="bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100 flex flex-col items-center justify-center">
+            
+            <div class="relative w-36 h-[480px] md:h-[520px] border-x-4 border-b-4 border-slate-200 rounded-b-3xl bg-slate-50/30 overflow-hidden">
+                <!-- Scale Markings -->
+                <div class="absolute inset-0 flex flex-col justify-between py-6 pointer-events-none opacity-30">
+                    <div class="border-t-2 border-slate-400 w-10 self-end"></div>
+                    <div class="border-t-2 border-slate-400 w-6 self-end"></div>
+                    <div class="border-t-2 border-slate-400 w-10 self-end"></div>
+                    <div class="border-t-2 border-slate-400 w-6 self-end"></div>
+                    <div class="border-t-2 border-slate-400 w-16 self-end"></div>
+                    <div class="border-t-2 border-slate-400 w-6 self-end"></div>
+                    <div class="border-t-2 border-slate-400 w-10 self-end"></div>
+                    <div class="border-t-2 border-slate-400 w-6 self-end"></div>
+                    <div class="border-t-2 border-slate-400 w-10 self-end"></div>
+                    <div class="border-t-2 border-slate-400 w-6 self-end"></div>
+                    <div class="border-t-2 border-slate-400 w-16 self-end"></div>
+                </div>
+
+                <!-- Liquid -->
+                <div id="liquid" class="liquid absolute bottom-0 left-0 right-0 w-full" style="height: 0%"></div>
+
+                <!-- Plunger Rod -->
+                <div id="plunger" class="plunger absolute left-1/2 -translate-x-1/2 w-5 bg-slate-200 border-x border-slate-300" style="bottom: 0%; height: 520px;">
+                    <!-- Plunger Head -->
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-10 bg-slate-800 rounded-lg shadow-lg"></div>
+                </div>
+            </div>
+
+            <div class="mt-10 text-center">
+                <p class="text-6xl font-black text-slate-900" id="resultLabel">0.0 <span class="text-2xl text-slate-400 ml-1">mL</span></p>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Conc: 100mg/mL</p>
+            </div>
+
+            <!-- Warning -->
+            <div id="warning" class="hidden mt-6 bg-rose-50 text-rose-600 px-6 py-3 rounded-2xl border border-rose-100 flex items-center gap-3 animate-pulse">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span class="text-[10px] font-black uppercase">Exceeds 10mL Limit</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-[3rem] p-10 max-w-sm w-full text-center shadow-2xl">
+            <div class="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3 class="text-2xl font-black text-slate-900 mb-2">Draw Dose?</h3>
+            <p id="confirmDesc" class="text-slate-500 text-sm mb-10"></p>
+            <div class="flex gap-4">
+                <button onclick="hideConfirm()" class="flex-1 py-4 font-bold text-slate-400 hover:text-slate-600 transition">Cancel</button>
+                <button onclick="finish()" class="flex-1 bg-emerald-600 text-white py-4 rounded-2xl font-black shadow-lg">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const FIXED_CONC = 100;
+
+        function updateVal(id, delta) {
+            const el = document.getElementById(id);
+            const newVal = Math.max(0, parseFloat(el.value) + delta);
+            el.value = (newVal % 1 === 0) ? newVal : newVal.toFixed(1);
+            calculate();
+        }
+
+        function calculate() {
+            const weight = parseFloat(document.getElementById('weight').value) || 0;
+            const dose = parseFloat(document.getElementById('dose').value) || 0;
+            
+            const totalMg = weight * dose;
+            const totalMl = totalMg / FIXED_CONC;
+
+            document.getElementById('resultLabel').innerHTML = `${totalMl.toFixed(1)} <span class="text-2xl text-slate-400 ml-1">mL</span>`;
+
+            const heightPercent = Math.min((totalMl / 10) * 100, 100);
+            document.getElementById('liquid').style.height = heightPercent + '%';
+            document.getElementById('plunger').style.bottom = heightPercent + '%';
+
+            const warning = document.getElementById('warning');
+            const liquid = document.getElementById('liquid');
+            if (totalMl > 10) {
+                warning.classList.remove('hidden');
+                liquid.style.background = 'linear-gradient(to bottom, #f43f5e, #e11d48)';
+            } else {
+                warning.classList.add('hidden');
+                liquid.style.background = 'linear-gradient(to bottom, #10b981, #059669)';
+            }
+        }
+
+        function showConfirm() {
+            const ml = document.getElementById('resultLabel').innerText.split(' ')[0];
+            const weight = document.getElementById('weight').value;
+            const dose = document.getElementById('dose').value;
+            document.getElementById('confirmDesc').innerText = `Dose: ${ml}mL for ${weight}kg patient at ${dose}mg/kg.`;
+            document.getElementById('confirmModal').classList.remove('hidden');
+        }
+
+        function hideConfirm() {
+            document.getElementById('confirmModal').classList.add('hidden');
+        }
+
+        function finish() {
+            alert("Calculation verified.");
+            hideConfirm();
+        }
+
+        window.onload = calculate;
+    </script>
+</body>
+</html>
