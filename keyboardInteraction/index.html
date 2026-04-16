@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuro-Pulse | Maryam Akram</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=JetBrains+Mono:wght@500&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            overflow: hidden; /* HCI Principle: Prevent accidental scrolling during tasks */
+            height: 100vh;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        }
+
+        .flash-correct { background-color: #ecfdf5 !important; border-color: #10b981 !important; transform: scale(1.02); }
+        .flash-error { background-color: #fff1f2 !important; border-color: #f43f5e !important; transform: scale(0.98); }
+
+        .num-font { font-family: 'JetBrains Mono', monospace; }
+
+        /* Animation for stimulus appearance */
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .pop-stimulus { animation: popIn 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        /* Scanline effect for "Clinical" aesthetic */
+        .scan-line {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(to right, transparent, #6366f1, transparent);
+            animation: scan 4s linear infinite;
+            opacity: 0.1;
+        }
+        @keyframes scan {
+            0% { top: 0%; }
+            100% { top: 100%; }
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+
+    <!-- Header: Principle of Visibility -->
+    <header class="p-4 md:p-6 flex justify-between items-center border-b bg-white/50 backdrop-blur-md">
+        <div class="flex items-center gap-4">
+            <div class="p-2.5 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100">
+                <i data-lucide="brain-circuit" class="text-white w-5 h-5"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-extrabold tracking-tight">Neuro-Pulse <span class="text-indigo-600 italic">Lab</span></h1>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cognitive Reaction protocol • Maryam Akram</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="text-right hidden sm:block">
+                <p class="text-[8px] font-black text-slate-500 uppercase">System Frequency</p>
+                <p class="text-xs font-mono font-bold text-emerald-500">60Hz SYNC</p>
+            </div>
+            <div class="h-8 w-px bg-slate-200"></div>
+            <i data-lucide="shield-check" class="text-indigo-400 w-5 h-5"></i>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-grow flex p-4 gap-4 overflow-hidden">
+        
+        <!-- Sidebar Metrics (HCI: Consistency and Grouping) -->
+        <aside class="w-72 flex flex-col gap-4">
+            <!-- Stats Card -->
+            <section class="glass p-6 rounded-[2rem] flex-grow space-y-6">
+                <div class="flex items-center justify-between text-slate-400">
+                    <span class="text-[10px] font-black uppercase tracking-widest">Metrics Panel</span>
+                    <i data-lucide="activity" class="w-4 h-4"></i>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Avg Response</p>
+                        <p class="text-5xl font-black text-indigo-600 num-font" id="avg-rt">0.000</p>
+                        <p class="text-[10px] text-slate-400 font-bold">SEC (τc + τm)</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
+                        <div>
+                            <p class="text-[8px] font-black text-slate-400 uppercase">Accuracy</p>
+                            <p class="text-xl font-bold text-emerald-500" id="accuracy">0%</p>
+                        </div>
+                        <div>
+                            <p class="text-[8px] font-black text-slate-400 uppercase">Trials</p>
+                            <p class="text-xl font-bold text-slate-700" id="progress">0/10</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Progress Bar -->
+                <div class="pt-4">
+                    <div class="flex justify-between text-[8px] font-black uppercase text-slate-400 mb-1.5">
+                        <span>Cognitive Depth</span>
+                        <span id="progress-pct">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-full bg-indigo-500 transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HCI Note Card -->
+            <section class="bg-indigo-600 p-5 rounded-[2rem] text-white shadow-xl shadow-indigo-100 flex flex-col justify-center">
+                <p class="text-[10px] leading-relaxed font-medium opacity-90">
+                    <strong class="block mb-1">HCI Insight:</strong>
+                    Choice Reaction Time is higher than simple RT because the user must classify the stimulus before motor firing.
+                </p>
+            </section>
+        </aside>
+
+        <!-- Main Experiment Area (HCI: Focal Point) -->
+        <article class="flex-grow glass rounded-[3rem] relative flex flex-col items-center justify-center p-8 transition-all duration-300" id="test-area">
+            <div class="scan-line"></div>
+            
+            <div id="status-tag" class="absolute top-8 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                Standby for Calibration
+            </div>
+
+            <!-- Stimulus (Fitts's Law Center) -->
+            <div id="stimulus" class="text-[12rem] font-black text-slate-900 num-font leading-none select-none transition-all duration-75">
+                —
+            </div>
+
+            <!-- Mapping Cues (HCI: Reduced eye-travel) -->
+            <div id="mapping-cues" class="mt-12 flex gap-16 transition-opacity duration-500 opacity-30">
+                <div class="text-center group">
+                    <kbd class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border-2 border-slate-200 font-mono text-sm font-bold shadow-sm group-hover:border-indigo-500 transition-colors">A</kbd>
+                    <p class="text-[8px] font-black text-slate-400 uppercase mt-3 tracking-widest">Letter Recognition</p>
+                </div>
+                <div class="text-center group">
+                    <kbd class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border-2 border-slate-200 font-mono text-sm font-bold shadow-sm group-hover:border-indigo-500 transition-colors">L</kbd>
+                    <p class="text-[8px] font-black text-slate-400 uppercase mt-3 tracking-widest">Number Recognition</p>
+                </div>
+            </div>
+
+            <!-- Start/Overlay (HCI: Clear Call to Action) -->
+            <div id="overlay" class="absolute inset-0 z-20 flex items-center justify-center rounded-[3rem] bg-white/40 backdrop-blur-sm">
+                <button onclick="initProtocol()" class="bg-slate-900 text-white px-10 py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs hover:bg-indigo-600 transition-all shadow-2xl active:scale-95 flex items-center gap-3">
+                    <i data-lucide="play-circle" class="w-4 h-4"></i> Initialize Protocol
+                </button>
+            </div>
+        </article>
+    </main>
+
+    <!-- Bottom Telemetry Bar -->
+    <footer class="p-3 bg-slate-900 text-slate-500 flex justify-between items-center px-10 text-[9px] font-bold uppercase tracking-[0.3em]">
+        <div class="flex gap-8">
+            <span class="text-indigo-400">Maryam Akram | DCS-UBIT</span>
+            <span>Predictive Modeling: GOMS-KLM</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+            Hardware Acceleration: ON
+        </div>
+    </footer>
+
+    <script>
+        let sessionData = [];
+        let trialStart = 0;
+        let waitingForInput = false;
+        let targetKey = '';
+        let trialIndex = 0;
+
+        function initProtocol() {
+            sessionData = [];
+            trialIndex = 0;
+            document.getElementById('overlay').classList.add('hidden');
+            document.getElementById('mapping-cues').classList.remove('opacity-30');
+            startTrial();
+        }
+
+        function startTrial() {
+            if (trialIndex >= 10) {
+                endProtocol();
+                return;
+            }
+
+            const area = document.getElementById('test-area');
+            const stim = document.getElementById('stimulus');
+            
+            // HCI: Visual reset
+            area.className = "flex-grow glass rounded-[3rem] relative flex flex-col items-center justify-center p-8 transition-all duration-300";
+            stim.innerText = "•";
+            stim.classList.remove('pop-stimulus');
+            document.getElementById('status-tag').innerText = `Calibrating Trial ${trialIndex + 1}`;
+
+            // Variable Interval (1.5s - 3.5s) to avoid rhythmic bias
+            const delay = 1500 + Math.random() * 2000;
+            
+            setTimeout(() => {
+                const isLetter = Math.random() > 0.5;
+                const set = isLetter ? "BCDFGHJKMNPQRSTWXYZ" : "23456789";
+                const char = set[Math.floor(Math.random() * set.length)];
+                
+                targetKey = isLetter ? 'a' : 'l';
+                stim.innerText = char;
+                stim.classList.add('pop-stimulus');
+                
+                document.getElementById('status-tag').innerText = "Input Required";
+                trialStart = performance.now();
+                waitingForInput = true;
+            }, delay);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (!waitingForInput) return;
+            
+            const key = e.key.toLowerCase();
+            if (key !== 'a' && key !== 'l') return;
+
+            const latency = (performance.now() - trialStart) / 1000;
+            const correct = key === targetKey;
+            
+            sessionData.push({ latency, correct });
+            trialIndex++;
+            waitingForInput = false;
+
+            // Feedback loop (HCI Error/Success)
+            const area = document.getElementById('test-area');
+            area.classList.add(correct ? 'flash-correct' : 'flash-error');
+            
+            refreshMetrics();
+            
+            if (trialIndex < 10) {
+                setTimeout(startTrial, 700);
+            } else {
+                endProtocol();
+            }
+        });
+
+        function refreshMetrics() {
+            const avg = sessionData.reduce((s, d) => s + d.latency, 0) / sessionData.length;
+            const acc = (sessionData.filter(d => d.correct).length / sessionData.length) * 100;
+            
+            document.getElementById('avg-rt').innerText = avg.toFixed(3);
+            document.getElementById('accuracy').innerText = `${acc.toFixed(0)}%`;
+            document.getElementById('progress').innerText = `${trialIndex}/10`;
+            
+            const pct = (trialIndex / 10) * 100;
+            document.getElementById('progress-bar').style.width = pct + '%';
+            document.getElementById('progress-pct').innerText = pct + '%';
+        }
+
+        function endProtocol() {
+            const stim = document.getElementById('stimulus');
+            stim.innerText = "FIN";
+            document.getElementById('status-tag').innerText = "Session Complete";
+            document.getElementById('overlay').classList.remove('hidden');
+            
+            const btn = document.querySelector('#overlay button');
+            btn.innerHTML = `<i data-lucide="rotate-ccw" class="w-4 h-4"></i> Re-Calibrate Session`;
+            lucide.createIcons();
+        }
+
+        window.onload = () => {
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>
