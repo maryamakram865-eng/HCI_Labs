@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCI Lab: KLM Method Comparison</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
+        
+        .window-box { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .hidden-window { transform: scale(0.95); opacity: 0; pointer-events: none; }
+        
+        #custom-menu {
+            position: absolute; display: none; background: white;
+            border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            z-index: 100; border: 1px solid #e2e8f0; width: 180px; padding: 6px;
+        }
+        
+        .menu-item { padding: 10px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .menu-item:hover { background: #f1f5f9; }
+        .menu-item.danger:hover { background: #fef2f2; color: #ef4444; }
+        
+        .kbd-key { background: #f1f5f9; border: 1px solid #cbd5e1; border-bottom-width: 3px; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        
+        .method-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            background-color: #1e293b;
+            border: 2px solid #334155;
+        }
+        .method-card:not(.disabled):hover {
+            transform: translateY(-8px);
+            border-color: #3b82f6;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        .method-card.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+        
+        .flex-center { display: flex; align-items: center; justify-content: center; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        #view-results { padding: 2rem; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- 1. START MENU (Keep KLM Here) -->
+    <div id="view-start" class="fixed inset-0 z-[200] bg-slate-900 flex-center p-6 text-white text-center">
+        <div class="max-w-2xl animate-in fade-in zoom-in duration-500">
+            <h1 class="text-5xl font-black mb-4 tracking-tight">HCI Prediction Lab</h1>
+            <p class="text-slate-400 text-lg mb-8 font-medium">Predicting user performance with the Keystroke-Level Model (KLM).</p>
+            
+            <div class="grid grid-cols-5 gap-4 mb-10">
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+                    <div class="font-black text-blue-400 text-lg mb-1">K</div>
+                    <div class="text-[10px] opacity-50 uppercase font-bold">Key</div>
+                    <div class="font-bold text-sm">0.28s</div>
+                </div>
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+                    <div class="font-black text-blue-400 text-lg mb-1">P</div>
+                    <div class="text-[10px] opacity-50 uppercase font-bold">Point</div>
+                    <div class="font-bold text-sm">1.10s</div>
+                </div>
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+                    <div class="font-black text-blue-400 text-lg mb-1">B</div>
+                    <div class="text-[10px] opacity-50 uppercase font-bold">Button</div>
+                    <div class="font-bold text-sm">0.20s</div>
+                </div>
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+                    <div class="font-black text-blue-400 text-lg mb-1">H</div>
+                    <div class="text-[10px] opacity-50 uppercase font-bold">Home</div>
+                    <div class="font-bold text-sm">0.40s</div>
+                </div>
+                <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
+                    <div class="font-black text-blue-400 text-lg mb-1">M</div>
+                    <div class="text-[10px] opacity-50 uppercase font-bold">Mental</div>
+                    <div class="font-bold text-sm">1.35s</div>
+                </div>
+            </div>
+            
+            <button onclick="changeView('view-select')" class="px-10 py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl font-black text-lg transition-all shadow-xl shadow-blue-500/20 active:scale-95">
+                START EXPERIMENT
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. SELECTION SCREEN -->
+    <div id="view-select" class="fixed inset-0 z-[150] bg-slate-900 hidden flex-center flex-col p-6 text-white">
+        <h2 class="text-4xl font-black mb-16 tracking-tight">Choose Interaction Method</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-5xl">
+            <div id="card-mouse" onclick="selectMethod('mouse')" class="method-card rounded-[40px] p-16 flex flex-col items-center justify-center gap-8">
+                <div class="w-24 h-24 bg-slate-800 rounded-3xl flex-center shadow-inner">
+                    <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"></path></svg>
+                </div>
+                <span class="text-2xl font-black tracking-widest uppercase">Method A: Mouse</span>
+            </div>
+            <div id="card-keys" onclick="selectMethod('keyboard')" class="method-card rounded-[40px] p-16 flex flex-col items-center justify-center gap-8">
+                <div class="w-24 h-24 bg-slate-800 rounded-3xl flex-center shadow-inner">
+                    <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                </div>
+                <span class="text-2xl font-black tracking-widest uppercase">Method B: Keys</span>
+            </div>
+        </div>
+        <p id="selection-hint" class="mt-16 text-slate-500 font-bold text-sm uppercase tracking-widest">Complete both to unlock comparison</p>
+    </div>
+
+    <!-- 3. LAB INTERFACE -->
+    <div id="view-lab" class="hidden animate-in fade-in duration-500 min-h-screen">
+        <main class="max-w-5xl mx-auto p-12 flex flex-col items-center">
+            <header class="mb-8 text-center">
+                <div id="trial-badge" class="inline-block px-5 py-1.5 bg-blue-100 text-blue-700 rounded-full text-[11px] font-black uppercase tracking-widest mb-4">Live Trial</div>
+                <h1 id="lab-title" class="text-4xl font-extrabold text-slate-900 tracking-tight">Task: Closing Window</h1>
+            </header>
+
+            <!-- SIMULATION STAGE -->
+            <div id="sim-stage" class="relative w-full h-[500px] bg-slate-100 rounded-[48px] border-4 border-white shadow-inner flex-center overflow-hidden mb-12">
+                <div id="target-window" class="window-box w-[450px] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden mx-auto">
+                    <div id="window-header" class="bg-slate-900 h-11 flex items-center justify-between px-5 cursor-default select-none">
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Lab_Simulation_v1.exe</span>
+                        <div class="flex gap-2">
+                            <div class="w-3 h-3 rounded-full bg-slate-700"></div>
+                            <div class="w-3 h-3 rounded-full bg-slate-700"></div>
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        </div>
+                    </div>
+                    <div class="p-20 text-center">
+                        <div id="instruction-mouse" class="hidden space-y-6">
+                            <p class="text-slate-500 font-bold text-xl tracking-tight">Right-click the header &rarr; Select "Close"</p>
+                            <div class="w-16 h-16 bg-slate-50 rounded-2xl mx-auto flex-center text-slate-300">
+                                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"></path></svg>
+                            </div>
+                        </div>
+                        <div id="instruction-keyboard" class="hidden space-y-6">
+                            <p class="text-slate-500 font-bold text-xl tracking-tight">Press <kbd class="kbd-key">Alt</kbd> + <kbd class="kbd-key">C</kbd></p>
+                            <div class="w-16 h-16 bg-slate-50 rounded-2xl mx-auto flex-center text-slate-300">
+                                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M7 15h1m4 0h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="custom-menu">
+                    <div class="menu-item">Properties</div>
+                    <div class="menu-item">Minimize</div>
+                    <div class="h-[1px] bg-slate-100 my-1.5"></div>
+                    <div id="menu-close" class="menu-item danger font-bold">Close Window</div>
+                </div>
+                <div id="success-overlay" class="absolute inset-0 bg-white/95 backdrop-blur-xl hidden flex-col items-center justify-center text-center p-10 animate-in zoom-in-95 duration-300">
+                    <div class="w-24 h-24 bg-green-100 text-green-600 rounded-full flex-center mb-8">
+                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <h3 class="text-3xl font-black text-slate-900">Success!</h3>
+                    <p class="text-slate-500 mt-3 text-lg font-medium" id="success-message">Recorded successfully.</p>
+                    <button id="next-btn" onclick="backToSelect()" class="mt-10 px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold shadow-2xl active:scale-95 transition-transform">
+                        Return to Selection
+                    </button>
+                </div>
+            </div>
+
+            <!-- TIMER BELOW (CENTERED) -->
+            <div class="w-full max-w-md mx-auto">
+                <div class="bg-white p-10 rounded-[40px] border border-slate-200 shadow-sm text-center">
+                    <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Measured Time</h3>
+                    <div id="live-timer" class="text-8xl font-black text-slate-900 tracking-tighter">0.00<span class="text-sm font-normal text-slate-400">s</span></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 4. MINIMALIST RESULTS SCREEN -->
+    <div id="view-results" class="fixed inset-0 z-[250] bg-slate-50 hidden flex-center p-6 md:p-12 overflow-y-auto custom-scrollbar">
+        <div class="max-w-5xl w-full bg-white rounded-[32px] p-8 md:p-12 animate-in slide-in-from-bottom-8 duration-700 shadow-xl border border-slate-200">
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+                <div>
+                    <h2 class="text-4xl font-black text-slate-900 tracking-tight">Interaction Report</h2>
+                    <p class="text-slate-500 font-medium mt-1">Comparison of Mouse vs. Keyboard efficiency.</p>
+                </div>
+                <button onclick="resetEverything()" class="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    START OVER
+                </button>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <div class="lg:col-span-4 flex flex-col gap-6">
+                    <div class="bg-blue-600 p-8 rounded-3xl text-white text-center">
+                        <h4 class="text-blue-200 font-black uppercase text-[10px] tracking-widest mb-4">Time Saved</h4>
+                        <div id="delta-value" class="text-6xl font-black tracking-tighter">0.00s</div>
+                        <p class="text-blue-200 font-bold mt-2 text-xs">Keyboard Advantage</p>
+                    </div>
+                    
+                    <div class="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                        <h4 class="text-slate-400 font-black uppercase text-[10px] tracking-widest mb-6">Expert Verdict</h4>
+                        <p id="verdict-text" class="text-slate-700 text-sm font-medium leading-relaxed italic">
+                            Keyboard shortcuts eliminate pointing time, significantly improving throughput for repeated tasks.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-8 overflow-hidden rounded-3xl border border-slate-100">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-400 font-black uppercase text-[10px] tracking-widest">
+                            <tr>
+                                <th class="px-8 py-5">Method</th>
+                                <th class="px-8 py-5">Actual</th>
+                                <th class="px-8 py-5">Expected</th>
+                                <th class="px-8 py-5">Diff</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const KLM = { K: 0.28, P: 1.10, B: 0.20, H: 0.40, M: 1.35 };
+        const EXPECTED = {
+            mouse: (KLM.P + KLM.B + KLM.M + KLM.P + KLM.B).toFixed(2),
+            keyboard: (KLM.H + KLM.M + KLM.K).toFixed(2)
+        };
+
+        let currentMethod = null;
+        let trialStartTime = 0;
+        let isActive = false;
+        let tickerId = null;
+        const state = { mouse: null, keyboard: null };
+
+        const ui = {
+            views: { 
+                start: document.getElementById('view-start'), 
+                select: document.getElementById('view-select'), 
+                lab: document.getElementById('view-lab'), 
+                results: document.getElementById('view-results') 
+            },
+            cards: { 
+                mouse: document.getElementById('card-mouse'), 
+                keyboard: document.getElementById('card-keys') 
+            },
+            instructions: { 
+                mouse: document.getElementById('instruction-mouse'), 
+                keyboard: document.getElementById('instruction-keyboard') 
+            },
+            window: document.getElementById('target-window'),
+            header: document.getElementById('window-header'),
+            menu: document.getElementById('custom-menu'),
+            timer: document.getElementById('live-timer'),
+            overlay: document.getElementById('success-overlay'),
+            successMessage: document.getElementById('success-message'),
+            resultsBody: document.getElementById('results-body'),
+            verdict: document.getElementById('verdict-text'),
+            delta: document.getElementById('delta-value'),
+            nextBtn: document.getElementById('next-btn')
+        };
+
+        function changeView(targetId) {
+            Object.values(ui.views).forEach(v => v.classList.add('hidden'));
+            document.getElementById(targetId).classList.remove('hidden');
+            if (targetId === 'view-select') updateSelectionCards();
+        }
+
+        function updateSelectionCards() {
+            ui.cards.mouse.className = `method-card rounded-[40px] p-16 flex flex-col items-center justify-center gap-8 ${state.mouse ? 'disabled' : ''}`;
+            ui.cards.keyboard.className = `method-card rounded-[40px] p-16 flex flex-col items-center justify-center gap-8 ${state.keyboard ? 'disabled' : ''}`;
+            const remaining = [state.mouse, state.keyboard].filter(s => !s).length;
+            document.getElementById('selection-hint').innerText = remaining === 0 ? "Data Complete! View Results" : `${remaining} Trial${remaining > 1 ? 's' : ''} Remaining`;
+        }
+
+        function selectMethod(method) {
+            if (state[method]) return;
+            currentMethod = method;
+            ui.instructions.mouse.classList.add('hidden');
+            ui.instructions.keyboard.classList.add('hidden');
+            ui.instructions[method].classList.remove('hidden');
+            document.getElementById('lab-title').innerText = method === 'mouse' ? 'Trial: Mouse Method' : 'Trial: Keyboard Method';
+            
+            resetLabTrial();
+            changeView('view-lab');
+            
+            trialStartTime = performance.now();
+            isActive = true;
+            startTicker();
+        }
+
+        function startTicker() {
+            if (tickerId) cancelAnimationFrame(tickerId);
+            function update() {
+                if (!isActive) return;
+                const now = performance.now();
+                const elapsed = (now - trialStartTime) / 1000;
+                ui.timer.innerHTML = elapsed.toFixed(2) + '<span class="text-sm font-normal text-slate-400">s</span>';
+                tickerId = requestAnimationFrame(update);
+            }
+            tickerId = requestAnimationFrame(update);
+        }
+
+        function resetLabTrial() {
+            isActive = false;
+            ui.overlay.classList.add('hidden');
+            ui.window.classList.remove('hidden-window');
+            ui.timer.innerHTML = '0.00<span class="text-sm font-normal text-slate-400">s</span>';
+        }
+
+        function completeTrial(actual) {
+            isActive = false;
+            state[currentMethod] = actual.toFixed(2);
+            ui.window.classList.add('hidden-window');
+            ui.timer.innerHTML = actual.toFixed(2) + '<span class="text-sm font-normal text-slate-400">s</span>';
+            const isFinished = state.mouse && state.keyboard;
+            ui.successMessage.innerText = isFinished ? "Comparison ready." : "Trial complete.";
+            ui.overlay.classList.remove('hidden');
+            if (isFinished) {
+                ui.nextBtn.innerText = "VIEW FINAL RESULTS";
+                ui.nextBtn.classList.replace('bg-slate-900', 'bg-blue-600');
+                ui.nextBtn.onclick = showResults;
+            } else {
+                ui.nextBtn.innerText = "Return to Selection";
+                ui.nextBtn.classList.replace('bg-blue-600', 'bg-slate-900');
+                ui.nextBtn.onclick = backToSelect;
+            }
+        }
+
+        function backToSelect() { changeView('view-select'); }
+
+        function showResults() {
+            renderResultsTable();
+            const diff = (parseFloat(state.mouse) - parseFloat(state.keyboard)).toFixed(2);
+            ui.delta.innerText = diff + 's';
+            ui.verdict.innerText = `Keyboard shortcuts are ${diff}s more efficient. The elimination of Homing (H) and Pointing (P) operators allows for a direct mapping between intention and execution.`;
+            changeView('view-results');
+        }
+
+        function renderResultsTable() {
+            ui.resultsBody.innerHTML = '';
+            ['mouse', 'keyboard'].forEach(m => {
+                const actual = state[m];
+                const predicted = EXPECTED[m];
+                const variance = (actual - predicted).toFixed(2);
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-50 font-bold hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-8 py-6 capitalize text-slate-900">${m}</td>
+                    <td class="px-8 py-6 text-blue-600 font-mono">${actual}s</td>
+                    <td class="px-8 py-6 text-slate-400 font-mono">${predicted}s</td>
+                    <td class="px-8 py-6 ${variance < 0 ? 'text-green-500' : 'text-orange-500'} font-mono">${variance > 0 ? '+' : ''}${variance}s</td>
+                `;
+                ui.resultsBody.appendChild(tr);
+            });
+        }
+
+        function resetEverything() {
+            state.mouse = null; state.keyboard = null; currentMethod = null;
+            changeView('view-start');
+        }
+
+        ui.header.oncontextmenu = (e) => {
+            e.preventDefault();
+            if (!isActive || currentMethod !== 'mouse') return;
+            ui.menu.style.left = `${e.clientX - ui.window.getBoundingClientRect().left}px`;
+            ui.menu.style.top = `${e.clientY - ui.window.getBoundingClientRect().top}px`;
+            ui.menu.style.display = 'block';
+        };
+
+        document.getElementById('menu-close').onclick = () => {
+            if (!isActive || currentMethod !== 'mouse') return;
+            const finalTime = (performance.now() - trialStartTime) / 1000;
+            completeTrial(finalTime);
+            ui.menu.style.display = 'none';
+        };
+
+        document.onkeydown = (e) => {
+            if (e.altKey && e.key.toLowerCase() === 'c' && isActive && currentMethod === 'keyboard') {
+                e.preventDefault();
+                const finalTime = (performance.now() - trialStartTime) / 1000;
+                completeTrial(finalTime);
+            }
+        };
+
+        document.onclick = (e) => { if (!ui.menu.contains(e.target)) ui.menu.style.display = 'none'; };
+    </script>
+</body>
+</html>
