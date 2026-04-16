@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitts's Law Lab | Maryam Akram</title>
+    <!-- Dependencies -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=JetBrains+Mono:wght@500&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #fcfdfe;
+            color: #0f172a;
+            overflow: hidden;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
+        }
+
+        @keyframes burst-ring {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; border-width: 8px; }
+            100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; border-width: 1px; }
+        }
+        .animate-burst { animation: burst-ring 0.6s cubic-bezier(0, 0, 0.2, 1) forwards; }
+        
+        .num-font { font-family: 'JetBrains Mono', monospace; }
+
+        input[type=range] {
+            accent-color: #4f46e5;
+        }
+
+        .cursor-crosshair-custom {
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Helper component for Lucide Icons
+        const Icon = ({ name, className = "w-5 h-5" }) => {
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            });
+            return <i data-lucide={name} className={className}></i>;
+        };
+
+        const App = () => {
+            const [testState, setTestState] = useState('idle'); // idle, active, results
+            const [trialCount, setTrialCount] = useState(0);
+            const [trials, setTrials] = useState([]);
+            const [targetConfig, setTargetConfig] = useState({ d: 250, w: 40 });
+            const [targetPos, setTargetPos] = useState({ x: 50, y: 50 });
+            const [startTime, setStartTime] = useState(null);
+            const [bursts, setBursts] = useState([]); 
+            
+            const MAX_TRIALS = 12;
+            const containerRef = useRef(null);
+
+            const calculateID = (D, W) => Math.log2(D / W + 1);
+            const calculateTP = (id, mt) => id / mt;
+
+            const getRandomStart = () => ({
+                x: 20 + Math.random() * 60,
+                y: 20 + Math.random() * 60
+            });
+
+            const getNextPosition = (current, distance) => {
+                if (!containerRef.current) return getRandomStart();
+                
+                const rect = containerRef.current.getBoundingClientRect();
+                const dPercX = (distance / rect.width) * 100;
+                const dPercY = (distance / rect.height) * 100;
+
+                let attempts = 0;
+                while (attempts < 30) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const nextX = current.x + dPercX * Math.cos(angle);
+                    const nextY = current.y + dPercY * Math.sin(angle);
+
+                    // Safe boundaries (15% padding to keep targets fully in view)
+                    if (nextX > 15 && nextX < 85 && nextY > 15 && nextY < 85) {
+                        return { x: nextX, y: nextY };
+                    }
+                    attempts++;
+                }
+                return getRandomStart();
+            };
+
+            const startExperiment = () => {
+                setTrials([]);
+                setTrialCount(0);
+                setTestState('active');
+                setTargetPos(getRandomStart());
+                setStartTime(performance.now());
+            };
+
+            const handleTargetClick = (e) => {
+                if (testState !== 'active') return;
+
+                const now = performance.now();
+                const burstId = Date.now();
+                setBursts(prev => [...prev, { id: burstId, x: targetPos.x, y: targetPos.y }]);
+                setTimeout(() => {
+                    setBursts(prev => prev.filter(b => b.id !== burstId));
+                }, 600);
+
+                if (trialCount > 0) {
+                    const mt = (now - startTime) / 1000;
+                    const ID = calculateID(targetConfig.d, targetConfig.w);
+                    const TP = calculateTP(ID, mt);
+                    setTrials(prev => [...prev, { mt, id: ID, tp: TP }]);
+                }
+
+                if (trialCount >= MAX_TRIALS) {
+                    setTestState('results');
+                } else {
+                    const nextPos = getNextPosition(targetPos, targetConfig.d);
+                    setTargetPos(nextPos);
+                    setTrialCount(c => c + 1);
+                    setStartTime(performance.now());
+                }
+            };
+
+            const avgTP = trials.length > 0 ? (trials.reduce((a, b) => a + b.tp, 0) / trials.length).toFixed(2) : 0;
+            const avgMT = trials.length > 0 ? (trials.reduce((a, b) => a + b.mt, 0) / trials.length).toFixed(3) : 0;
+
+            return (
+                <div className="h-screen w-full flex flex-col p-4 md:p-8 lg:p-10 relative overflow-hidden">
+                    {/* Background Accents */}
+                    <div className="absolute top-[-5%] left-[-5%] w-[40%] h-[40%] bg-indigo-50 rounded-full blur-[100px] -z-10" />
+                    <div className="absolute bottom-[-5%] right-[-5%] w-[40%] h-[40%] bg-rose-50 rounded-full blur-[100px] -z-10" />
+
+                    <header className="flex shrink-0 justify-between items-center mb-6">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-indigo-600 p-2.5 rounded-xl shadow-xl shadow-indigo-100">
+                                <Icon name="shield-check" className="text-white w-5 h-5" />
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-black uppercase tracking-tight">Fitts's Law Lab</h1>
+                                <p className="text-[9px] font-black text-indigo-500 uppercase tracking-[0.4em]">ISO 9241-9 Neural Protocol • Maryam Akram</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Biometrics: Online</span>
+                        </div>
+                    </header>
+
+                    <main className="flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
+                        {/* Sidebar: Calibration & ID */}
+                        <div className="lg:col-span-4 flex flex-col gap-6 min-h-0">
+                            <div className="glass-panel p-6 rounded-[2rem] space-y-8 flex flex-col min-h-0 overflow-y-auto no-scrollbar">
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                    <Icon name="settings-2" className="w-3.5 h-3.5" /> Calibration
+                                </h3>
+                                
+                                <div className="space-y-8">
+                                    <div>
+                                        <div className="flex justify-between text-[10px] font-black uppercase mb-3">
+                                            <span>Amplitude (D)</span>
+                                            <span className="text-indigo-600 font-mono tracking-tight">{targetConfig.d}px</span>
+                                        </div>
+                                        <input 
+                                            type="range" min="150" max="450" step="10" value={targetConfig.d} 
+                                            onChange={(e) => setTargetConfig({...targetConfig, d: parseInt(e.target.value)})}
+                                            disabled={testState === 'active'}
+                                            className="w-full h-1 bg-slate-200 rounded-full appearance-none cursor-pointer"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <div className="flex justify-between text-[10px] font-black uppercase mb-3">
+                                            <span>Width (W)</span>
+                                            <span className="text-indigo-600 font-mono tracking-tight">{targetConfig.w}px</span>
+                                        </div>
+                                        <input 
+                                            type="range" min="15" max="80" step="5" value={targetConfig.w} 
+                                            onChange={(e) => setTargetConfig({...targetConfig, w: parseInt(e.target.value)})}
+                                            disabled={testState === 'active'}
+                                            className="w-full h-1 bg-slate-200 rounded-full appearance-none cursor-pointer"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="mt-auto bg-slate-900 p-6 rounded-[1.5rem] text-white shadow-2xl relative overflow-hidden group shrink-0">
+                                    <div className="absolute -right-4 -top-4 opacity-10 group-hover:rotate-12 transition-transform">
+                                        <Icon name="binary" className="w-24 h-24" />
+                                    </div>
+                                    <div className="flex items-center gap-3 mb-2 text-indigo-400">
+                                        <Icon name="activity" className="w-4 h-4" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest">Complexity (ID)</span>
+                                    </div>
+                                    <div className="text-4xl font-black tabular-nums tracking-tighter">
+                                        {calculateID(targetConfig.d, targetConfig.w).toFixed(2)}
+                                        <span className="text-xs font-bold opacity-40 ml-2 uppercase tracking-wide">Bits</span>
+                                    </div>
+                                    <p className="text-[8px] text-slate-500 mt-4 font-bold uppercase tracking-widest">
+                                        Theoretical Information Capacity
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Lab Canvas: The Interactive Focus */}
+                        <div className="lg:col-span-8 glass-panel rounded-[2.5rem] p-4 flex flex-col relative overflow-hidden h-full">
+                            <div ref={containerRef} className="flex-1 relative rounded-[1.8rem] overflow-hidden">
+                                {testState === 'idle' && (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                                        <div className="w-20 h-20 bg-indigo-50 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner">
+                                            <Icon name="mouse-pointer-2" className="w-8 h-8 text-indigo-500" />
+                                        </div>
+                                        <h2 className="text-3xl font-black text-slate-900 mb-3 tracking-tighter uppercase leading-tight">Motor<br/>Benchmark</h2>
+                                        <p className="text-slate-500 max-w-xs mb-8 text-xs font-medium leading-relaxed">
+                                            Benchmarking pointing throughput under standardized ISO parameters.
+                                        </p>
+                                        <button 
+                                            onClick={startExperiment}
+                                            className="flex items-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black px-10 py-4 rounded-[1.5rem] transition-all active:scale-95 uppercase tracking-widest text-[9px] shadow-xl shadow-indigo-100"
+                                        >
+                                            Initialize Test <Icon name="chevron-right" className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {testState === 'active' && (
+                                    <div className="absolute inset-0 bg-slate-50/20 rounded-[1.8rem] cursor-crosshair-custom">
+                                        <div className="absolute top-6 left-6 z-20">
+                                            <div className="bg-slate-900 px-5 py-2 rounded-full border border-white/10 shadow-xl">
+                                                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest animate-pulse">Trial: {trialCount}/{MAX_TRIALS}</span>
+                                            </div>
+                                        </div>
+
+                                        {bursts.map(b => (
+                                            <div key={b.id} className="absolute pointer-events-none z-30" style={{ left: `${b.x}%`, top: `${b.y}%` }}>
+                                                <div className="w-20 h-20 border-4 border-rose-500 rounded-full animate-burst" />
+                                            </div>
+                                        ))}
+
+                                        <button
+                                            onClick={handleTargetClick}
+                                            style={{ 
+                                                position: 'absolute',
+                                                left: `${targetPos.x}%`, 
+                                                top: `${targetPos.y}%`,
+                                                width: targetConfig.w, 
+                                                height: targetConfig.w,
+                                                transform: 'translate(-50%, -50%)'
+                                            }}
+                                            className="rounded-full bg-rose-500 shadow-[0_0_30px_rgba(244,63,94,0.5)] ring-4 ring-rose-500/10 flex items-center justify-center active:scale-75 transition-all duration-100 z-40"
+                                        >
+                                            <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {testState === 'results' && (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-white/90 backdrop-blur-xl rounded-[1.8rem] animate-in fade-in duration-500">
+                                        <div 
+                                            className="w-14 h-14 bg-rose-50 rounded-full flex items-center justify-center mb-6 cursor-pointer hover:bg-rose-100 transition-all hover:rotate-180 shadow-sm" 
+                                            onClick={() => setTestState('idle')}
+                                        >
+                                            <Icon name="rotate-ccw" className="w-5 h-5 text-rose-500" />
+                                        </div>
+                                        <h2 className="text-2xl font-black text-slate-900 mb-8 tracking-tighter uppercase">Audit Analysis</h2>
+                                        
+                                        <div className="grid grid-cols-2 gap-4 w-full max-w-sm mb-8">
+                                            <div className="bg-white p-6 rounded-[2rem] border border-slate-100 text-center shadow-md">
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Throughput</p>
+                                                <p className="text-3xl font-black text-indigo-600 num-font">{avgTP} <span className="text-[10px] opacity-40 uppercase tracking-tighter">Bps</span></p>
+                                            </div>
+                                            <div className="bg-white p-6 rounded-[2rem] border border-slate-100 text-center shadow-md">
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg Speed</p>
+                                                <p className="text-3xl font-black text-rose-500 num-font">{avgMT} <span className="text-[10px] opacity-40 uppercase tracking-tighter">S</span></p>
+                                            </div>
+                                        </div>
+
+                                        <div className="p-5 bg-slate-900 rounded-[1.8rem] text-white flex items-center gap-4 max-w-sm">
+                                            <div className="p-2 bg-indigo-500/20 rounded-lg shrink-0">
+                                                <Icon name="zap" className="w-5 h-5 text-indigo-400" />
+                                            </div>
+                                            <p className="text-[10px] font-medium leading-relaxed italic opacity-80">
+                                                Bandwidth verified. Your spatial motor throughput is within nominal human limits for the current ID.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </main>
+
+                    <footer className="mt-6 shrink-0 flex justify-between items-center text-[8px] font-black text-slate-300 uppercase tracking-[0.4em]">
+                        <span>Model Human Processor</span>
+                        <span className="hidden sm:inline">Predictive Neural Bandwidth</span>
+                        <span>© 2026 Maryam Akram</span>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
