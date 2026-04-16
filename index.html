@@ -1,1 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuro-Archive | Maryam Akram</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=JetBrains+Mono:wght@500&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #ffffff;
+            color: #1e293b;
+            overflow: hidden; 
+            height: 100vh;
+            margin: 0;
+            display: flex;
+        }
 
+        .bento-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 1.25rem;
+            width: 100%;
+            height: 100%;
+            padding: 1.5rem;
+        }
+
+        .bento-item {
+            background: #f8fafc;
+            border: 1px solid #f1f5f9;
+            border-radius: 2.5rem;
+            padding: 2rem;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .bento-item:hover {
+            background: #ffffff;
+            border-color: #fb7185;
+            box-shadow: 0 25px 50px -12px rgba(251, 113, 133, 0.15);
+            transform: scale(1.02);
+        }
+
+        /* Unique Maryam Theme Gradients */
+        .maryam-gradient {
+            background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
+        }
+
+        .violet-glow {
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.1);
+        }
+
+        /* Focal Point Animation */
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        .pulse-dot { animation: pulse-soft 3s infinite; }
+
+        .num-font { font-family: 'JetBrains Mono', monospace; }
+
+        /* Responsive adjustments to keep everything visible */
+        @media (max-height: 700px) {
+            .bento-item { padding: 1.25rem; border-radius: 1.5rem; }
+            h2 { font-size: 1.125rem; }
+            p { font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <!-- Left Navigation Bar (HCI: Focal point stability) -->
+    <aside class="w-80 h-full border-r border-slate-200 bg-white p-10 flex flex-col justify-between shrink-0">
+        <div class="space-y-10">
+            <div class="space-y-2">
+                <div class="w-12 h-1 bg-rose-500 rounded-full"></div>
+                <h1 class="text-3xl font-extrabold tracking-tighter text-slate-900 leading-none">
+                    NEURO<br/><span class="text-rose-500">ARCHIVE</span>
+                </h1>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest pt-2">Lab Portfolio v2.0</p>
+            </div>
+
+            <nav class="space-y-4">
+                <div class="flex items-center gap-4 text-slate-400 group cursor-pointer hover:text-rose-500 transition-colors">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                    <span class="text-sm font-bold uppercase tracking-widest">Protocol Hub</span>
+                </div>
+                <div class="flex items-center gap-4 text-slate-400 group cursor-pointer hover:text-rose-500 transition-colors">
+                    <i data-lucide="activity" class="w-5 h-5"></i>
+                    <span class="text-sm font-bold uppercase tracking-widest">Analytics</span>
+                </div>
+                <div class="flex items-center gap-4 text-slate-400 group cursor-pointer hover:text-rose-500 transition-colors">
+                    <i data-lucide="user-check" class="w-5 h-5 text-rose-500"></i>
+                    <span class="text-sm font-bold uppercase tracking-widest text-slate-900">M. Akram</span>
+                </div>
+            </nav>
+        </div>
+
+        <div class="space-y-4">
+            <div class="p-5 bg-slate-50 rounded-3xl border border-slate-100">
+                <p class="text-[9px] font-black text-slate-400 uppercase mb-2">System Status</p>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full pulse-dot"></span>
+                    <span class="text-xs font-bold text-slate-600">Active Syncing</span>
+                </div>
+            </div>
+            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-relaxed">
+                Karachi University<br/>Dept. of Computer Science
+            </p>
+        </div>
+    </aside>
+
+    <!-- Main Bento Grid (HCI: Hick's Law - Grouped Choices) -->
+    <main class="flex-grow bento-container">
+        
+        <!-- Lab 1: Fitts (Hero Item) -->
+        <a href="./FittsLab/index.html" class="bento-item lg:col-span-2 maryam-gradient border-none group">
+            <div class="absolute -right-10 -bottom-10 opacity-10 group-hover:scale-125 transition-transform duration-700">
+                <i data-lucide="mouse-pointer-2" class="w-64 h-64 text-white"></i>
+            </div>
+            <div class="text-white/60 font-black text-[10px] uppercase tracking-[0.3em]">Module_01</div>
+            <div>
+                <h2 class="text-4xl font-extrabold text-white tracking-tighter mb-2">Fitts's Law</h2>
+                <p class="text-white/80 text-sm max-w-xs leading-relaxed">Neural bandwidth testing through amplitude and width variables.</p>
+            </div>
+            <div class="flex items-center gap-2 text-white font-bold text-xs uppercase tracking-widest mt-6">
+                Initialize Protocol <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </div>
+        </a>
+
+        <!-- Lab 2: GOMS -->
+        <a href="./HCI_prediction/index.html" class="bento-item group">
+            <div class="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Module_02</div>
+            <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 mb-4 group-hover:bg-rose-500 group-hover:text-white transition-colors">
+                <i data-lucide="brain"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold mb-1">GOMS Predictor</h2>
+                <p class="text-xs text-slate-400">Task execution simulation.</p>
+            </div>
+        </a>
+
+        <!-- Lab 3: Dosage -->
+        <a href="./dosageCalc/index.html" class="bento-item group bg-slate-900 border-none">
+            <div class="text-rose-400 font-black text-[10px] uppercase tracking-[0.3em]">Module_03</div>
+            <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-rose-500 mb-4 group-hover:bg-rose-500 group-hover:text-white transition-colors">
+                <i data-lucide="pill"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-white mb-1">Dosage Viz</h2>
+                <p class="text-xs text-slate-500">Medical UI constraints.</p>
+            </div>
+        </a>
+
+        <!-- Lab 4: WhoPaid (Wide Item) -->
+        <a href="./whoPaid/index.html" class="bento-item lg:col-span-2 group">
+            <div class="absolute right-8 top-1/2 -translate-y-1/2 text-slate-100 group-hover:text-rose-50 transition-colors">
+                <i data-lucide="wallet" class="w-32 h-32"></i>
+            </div>
+            <div class="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Module_04</div>
+            <div class="z-10">
+                <h2 class="text-3xl font-extrabold tracking-tighter mb-2">Finance UX</h2>
+                <p class="text-sm text-slate-400 max-w-xs leading-relaxed">Cognitive load reduction in split-transaction management.</p>
+            </div>
+            <div class="flex items-center gap-2 text-rose-500 font-bold text-xs uppercase tracking-widest mt-4">
+                View Research <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+            </div>
+        </a>
+
+        <!-- Lab 5: Keyboard -->
+        <a href="./keyboardInteraction/index.html" class="bento-item group">
+            <div class="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Module_05</div>
+            <div class="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-500 mb-4 group-hover:bg-rose-500 group-hover:text-white transition-colors">
+                <i data-lucide="keyboard"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold mb-1">Reaction Lab</h2>
+                <p class="text-xs text-slate-400">Choice reaction metrics.</p>
+            </div>
+        </a>
+
+        <!-- Aesthetic Stats (Non-link) -->
+        <div class="bento-item violet-glow">
+            <div class="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em]">Insights</div>
+            <div class="space-y-1">
+                <p class="text-3xl font-black text-rose-500 num-font tracking-tighter">100%</p>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Heuristic Accuracy</p>
+            </div>
+            <div class="pt-4 flex gap-1">
+                <div class="h-1 flex-grow bg-rose-500 rounded-full"></div>
+                <div class="h-1 flex-grow bg-slate-200 rounded-full"></div>
+                <div class="h-1 flex-grow bg-slate-200 rounded-full"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
